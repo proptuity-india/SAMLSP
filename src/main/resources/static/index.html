@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACME Employee Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366F1',
+                        primaryHover: '#4F46E5',
+                        darkBg: '#0F172A',
+                        darkCard: '#1E293B',
+                        lightText: '#E2E8F0',
+                        mutedText: '#94A3B8',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-darkBg font-sans text-white min-h-screen flex flex-col">
+<!-- Navigation Bar -->
+<nav class="flex items-center justify-between px-8 py-4 border-b border-gray-800">
+    <!-- Logo -->
+    <div class="flex items-center">
+        <svg class="w-8 h-8 text-primary" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" stroke-width="2"/>
+            <path d="M8 12L11 15L16 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="ml-2 text-xl font-semibold">ACME</span>
+    </div>
+
+    <!-- Menu Items -->
+    <div class="flex space-x-6">
+        <a href="#" class="text-mutedText hover:text-lightText transition-colors">About</a>
+        <a href="#" class="text-mutedText hover:text-lightText transition-colors">Support</a>
+        <a href="#" class="text-mutedText hover:text-lightText transition-colors">Contact Us</a>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<main class="flex-grow flex items-center justify-center">
+    <div class="text-center max-w-2xl px-4">
+        <h1 class="text-4xl font-bold mb-4">Welcome to the ACME Employee Portal</h1>
+        <p class="text-xl text-mutedText mb-10">Your one-stop access to all ACME Retail resources, tools and information.</p>
+
+        <div class="flex flex-col items-center space-y-6">
+            <!-- SSO Login Button -->
+            <button onclick="window.location.href='/saml/login'"
+                    class="bg-primary hover:bg-primaryHover text-white font-medium py-3 px-8 rounded-lg text-lg flex items-center transition-colors shadow-lg">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+                </svg>
+                Login with SSO
+            </button>
+
+            <!-- Help Link -->
+            <p class="text-mutedText">
+                Having trouble logging in?
+                <a href="#" class="text-primary hover:underline">Get help</a>
+            </p>
+        </div>
+    </div>
+</main>
+
+<!-- Resource Cards Section -->
+<section class="py-16 px-8">
+    <h2 class="text-2xl font-semibold text-center mb-12">Access Everything You Need</h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+        <!-- Work Tools Card -->
+        <div class="bg-darkCard rounded-xl p-8 text-center hover:shadow-lg transition-shadow">
+            <div class="bg-gray-800 w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4">
+                <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                </svg>
+            </div>
+            <h3 class="text-xl font-medium mb-2">Work Tools</h3>
+            <p class="text-mutedText">Access all your daily work applications</p>
+        </div>
+
+        <!-- Sales Dashboard Card -->
+        <div class="bg-darkCard rounded-xl p-8 text-center hover:shadow-lg transition-shadow">
+            <div class="bg-gray-800 w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4">
+                <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+            </div>
+            <h3 class="text-xl font-medium mb-2">Sales Dashboard</h3>
+            <p class="text-mutedText">View real-time sales metrics and reports</p>
+        </div>
+
+        <!-- HR Resources Card -->
+        <div class="bg-darkCard rounded-xl p-8 text-center hover:shadow-lg transition-shadow">
+            <div class="bg-gray-800 w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4">
+                <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
+            </div>
+            <h3 class="text-xl font-medium mb-2">HR Resources</h3>
+            <p class="text-mutedText">Company policies, benefits and HR tools</p>
+        </div>
+    </div>
+</section>
+</body>
+</html>
