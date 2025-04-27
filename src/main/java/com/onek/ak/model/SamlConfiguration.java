@@ -1,37 +1,58 @@
 package com.onek.ak.model;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
 
-@Document(collection = "saml_configurations")
+import java.util.List;
+import java.util.Map;
+
 public class SamlConfiguration {
-    @Id
-    private String id;
     private String spEntityId;
     private String assertionConsumerServiceURL;
     private String idpSSOUrl;
-    private String authContextValue;
+    private List<AttributeMap> attributeMappings;
+    //create getters and setters for attributeMappings
+
+    public List<AttributeMap> getAttributeMappings() {
+        return attributeMappings;
+    }
+
+    public void setAttributeMappings(List<AttributeMap> attributeMappings) {
+        this.attributeMappings = attributeMappings;
+    }
 
     // Constructors, getters, setters
     public SamlConfiguration() {}
 
     public SamlConfiguration(String spEntityId, String assertionConsumerServiceURL,
-                             String idpSSOUrl, String authContextValue) {
+                             String idpSSOUrl) {
         this.spEntityId = spEntityId;
         this.assertionConsumerServiceURL = assertionConsumerServiceURL;
         this.idpSSOUrl = idpSSOUrl;
-        this.authContextValue = authContextValue;
     }
 
     // Getters and Setters
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
     public String getSpEntityId() { return spEntityId; }
     public void setSpEntityId(String spEntityId) { this.spEntityId = spEntityId; }
     public String getAssertionConsumerServiceURL() { return assertionConsumerServiceURL; }
     public void setAssertionConsumerServiceURL(String assertionConsumerServiceURL) { this.assertionConsumerServiceURL = assertionConsumerServiceURL; }
     public String getIdpSSOUrl() { return idpSSOUrl; }
     public void setIdpSSOUrl(String idpSSOUrl) { this.idpSSOUrl = idpSSOUrl; }
-    public String getAuthContextValue() { return authContextValue; }
-    public void setAuthContextValue(String authContextValue) { this.authContextValue = authContextValue; }
+
+    public boolean isValid() {
+        return isNotBlank(spEntityId)
+                && isNotBlank(assertionConsumerServiceURL)
+                && isNotBlank(idpSSOUrl);
+    }
+
+    private boolean isNotBlank(String value) {
+        return value != null && !value.trim().isEmpty();
+    }
+
+    @Override
+    public String toString() {
+        return "SamlConfiguration{" +
+                "spEntityId='" + spEntityId + '\'' +
+                ", assertionConsumerServiceURL='" + assertionConsumerServiceURL + '\'' +
+                ", idpSSOUrl='" + idpSSOUrl + '\'' +
+                '}';
+    }
 }

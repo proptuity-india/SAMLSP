@@ -4,6 +4,8 @@ import org.opensaml.core.config.InitializationService;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import static junit.framework.TestCase.assertTrue;
+
 @SpringBootApplication
 public class SamlspApplication {
 

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAML Configuration</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; padding: 20px; }
+        .config-container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 20px; }
+        .status-message { display: none; margin-top: 15px; }
+        .is-invalid { border-color: #dc3545; }
+        .invalid-feedback { color: #dc3545; display: none; }
+        .attribute-table { width: 100%; margin-bottom: 15px; }
+        .attribute-table th { padding: 10px; background: #f1f1f1; }
+        .attribute-table td { padding: 8px; vertical-align: middle; }
+    </style>
+</head>
+<body>
+<div class="container config-container">
+    <h1 class="text-center mb-4">SAML Configuration</h1>
+
+    <form id="configForm" novalidate>
+        <!-- Existing Fields -->
+        <div class="form-group">
+            <label for="spEntityId" class="form-label">Service Provider Entity ID</label>
+            <input type="text" class="form-control" id="spEntityId" required>
+            <div class="invalid-feedback">Please provide a valid Entity ID</div>
+        </div>
+
+        <div class="form-group">
+            <label for="acsUrl" class="form-label">Assertion Consumer Service URL</label>
+            <input type="url" class="form-control" id="acsUrl" required>
+            <div class="invalid-feedback">Please provide a valid URL</div>
+        </div>
+
+        <div class="form-group">
+            <label for="idpSsoUrl" class="form-label">Identity Provider SSO URL</label>
+            <input type="url" class="form-control" id="idpSsoUrl" required>
+            <div class="invalid-feedback">Please provide a valid URL</div>
+        </div>
+
+        <!-- Attribute Mappings Section -->
+        <div class="form-group">
+            <label class="form-label">Attribute Mappings</label>
+            <div class="card">
+                <div class="card-body">
+                    <table class="attribute-table">
+                        <thead>
+                        <tr>
+                            <th>SAML Attribute</th>
+                            <th>Mapped Name</th>
+                            <th>Value Type</th>
+                            <th>Action</th>
+                        </tr>
+                        </thead>
+                        <tbody id="attributeMappingsContainer">
+                        <!-- Attribute mappings will be loaded here -->
+                        </tbody>
+                    </table>
+                    <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="addAttributeField()">
+                        + Add Attribute Mapping
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between mt-4">
+            <button type="button" onclick="loadConfig()" class="btn btn-secondary">Load Current Config</button>
+            <button type="submit" class="btn btn-primary">Save Configuration</button>
+        </div>
+
+        <div id="statusMessage" class="alert status-message mt-3"></div>
+    </form>
+</div>
+
+<script>
+    // Track used attributes to prevent duplicates
+    const usedAttributes = new Set();
+
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        setupFormValidation();
+        loadConfig();
+    });
+
+    function setupFormValidation() {
+        const form = document.getElementById('configForm');
+
+        // Add validation for existing fields
+        ['spEntityId', 'acsUrl', 'idpSsoUrl'].forEach(id => {
+            document.getElementById(id).addEventListener('input', () => validateField(id));
+        });
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (validateForm()) {
+                saveConfig();
+            }
+        });
+    }
+
+    function validateField(fieldId) {
+        const field = document.getElementById(fieldId);
+        const errorElement = field.nextElementSibling;
+
+        if (field.value.trim() === '') {
+            field.classList.add('is-invalid');
+            errorElement.style.display = 'block';
+            return false;
+        }
+
+        if (field.type === 'url' && !isValidUrl(field.value.trim())) {
+            field.classList.add('is-invalid');
+            errorElement.style.display = 'block';
+            return false;
+        }
+
+        field.classList.remove('is-invalid');
+        errorElement.style.display = 'none';
+        return true;
+    }
+
+    function validateForm() {
+        let isValid = true;
+        ['spEntityId', 'acsUrl', 'idpSsoUrl'].forEach(id => {
+            if (!validateField(id)) isValid = false;
+        });
+
+        // Validate attribute mappings
+        document.querySelectorAll('.attribute-name').forEach(input => {
+            if (!input.value.trim()) {
+                input.classList.add('is-invalid');
+                isValid = false;
+            }
+        });
+
+        return isValid;
+    }
+
+    function isValidUrl(string) {
+        try {
+            new URL(string);
+            return string.startsWith('http://') || string.startsWith('https://');
+        } catch (_) {
+            return false;
+        }
+    }
+
+    function addAttributeField(attributeName = '', mappedName = '', isList = false) {
+        const container = document.getElementById('attributeMappingsContainer');
+        const fieldId = 'attr-' + Date.now();
+
+        const rowHtml = `
+        <tr id="${fieldId}">
+            <td>
+                <input type="text" class="form-control attribute-name"
+                       value="${attributeName}" placeholder="SAML Attribute" required
+                       onchange="checkDuplicateAttribute(this)">
+                <div class="invalid-feedback">This attribute is already used</div>
+            </td>
+            <td>
+                <input type="text" class="form-control mapped-name"
+                       value="${mappedName || attributeName}" placeholder="Mapped name">
+            </td>
+            <td>
+                <select class="form-select value-type">
+                    <option value="false" ${!isList ? 'selected' : ''}>Single Value</option>
+                    <option value="true" ${isList ? 'selected' : ''}>Multiple Values</option>
+                </select>
+            </td>
+            <td>
+                <button type="button" class="btn btn-sm btn-outline-danger"
+                        onclick="removeAttributeField('${fieldId}', this)">
+                    Remove
+                </button>
+            </td>
+        </tr>`;
+
+        container.insertAdjacentHTML('beforeend', rowHtml);
+
+        if (attributeName) {
+            usedAttributes.add(attributeName.toLowerCase());
+        }
+    }
+
+    function checkDuplicateAttribute(input) {
+        const value = input.value.trim();
+        const row = input.closest('tr');
+
+        if (!value) {
+            input.classList.add('is-invalid');
+            return false;
+        }
+
+        // Check for duplicates (case-insensitive)
+        const isDuplicate = Array.from(document.querySelectorAll('.attribute-name'))
+            .some(el => el !== input && el.value.trim().toLowerCase() === value.toLowerCase());
+
+        if (isDuplicate) {
+            input.classList.add('is-invalid');
+            row.querySelector('.invalid-feedback').style.display = 'block';
+            return false;
+        } else {
+            input.classList.remove('is-invalid');
+            row.querySelector('.invalid-feedback').style.display = 'none';
+
+            // Update mapped name if it matches the old attribute name
+            const mappedNameInput = row.querySelector('.mapped-name');
+            if (mappedNameInput.value === input.dataset.prevValue) {
+                mappedNameInput.value = value;
+            }
+
+            // Update usedAttributes set
+            if (input.dataset.prevValue) {
+                usedAttributes.delete(input.dataset.prevValue.toLowerCase());
+            }
+            usedAttributes.add(value.toLowerCase());
+            input.dataset.prevValue = value;
+
+            return true;
+        }
+    }
+
+    function removeAttributeField(rowId, button) {
+        const row = document.getElementById(rowId);
+        const attributeInput = row.querySelector('.attribute-name');
+        const attributeName = attributeInput.value.trim();
+
+        if (attributeName) {
+            usedAttributes.delete(attributeName.toLowerCase());
+        }
+        row.remove();
+    }
+
+    function loadConfig() {
+        fetch('/api/admin/saml-config')
+            .then(response => response.json())
+            .then(config => {
+                // Set basic fields
+                document.getElementById('spEntityId').value = config.spEntityId || '';
+                document.getElementById('acsUrl').value = config.assertionConsumerServiceURL || '';
+                document.getElementById('idpSsoUrl').value = config.idpSSOUrl || '';
+
+                // Clear existing attribute mappings
+                const container = document.getElementById('attributeMappingsContainer');
+                container.innerHTML = '';
+                usedAttributes.clear();
+
+                // Load attribute mappings
+                if (config.attributeMappings && config.attributeMappings.length > 0) {
+                    config.attributeMappings.forEach(mapping => {
+                        addAttributeField(
+                            mapping.attributeName,
+                            mapping.mappedName,
+                            mapping.isList
+                        );
+                    });
+                }
+
+                showStatus('Configuration loaded', 'success');
+            })
+            .catch(error => {
+                showStatus('Error loading config: ' + error.message, 'danger');
+            });
+    }
+
+    function saveConfig() {
+        // Collect attribute mappings
+        const attributeMappings = [];
+        document.querySelectorAll('#attributeMappingsContainer tr').forEach(row => {
+            const attributeName = row.querySelector('.attribute-name').value.trim();
+            const mappedName = row.querySelector('.mapped-name').value.trim() || attributeName;
+            const isList = row.querySelector('.value-type').value === 'true';
+
+            if (attributeName) {
+                attributeMappings.push({
+                    attributeName: attributeName,
+                    mappedName: mappedName,
+                    isList: isList
+                });
+            }
+        });
+
+        const config = {
+            spEntityId: document.getElementById('spEntityId').value.trim(),
+            assertionConsumerServiceURL: document.getElementById('acsUrl').value.trim(),
+            idpSSOUrl: document.getElementById('idpSsoUrl').value.trim(),
+            attributeMappings: attributeMappings
+        };
+
+        fetch('/api/admin/saml-config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(config)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.valid) {
+                showStatus('Configuration saved successfully!', 'success');
+                loadConfig(); // Reload to ensure we have the latest from server
+            } else {
+                showStatus('Configuration saved but validation failed', 'warning');
+            }
+        })
+        .catch(error => showStatus('Error saving config: ' + error.message, 'danger'));
+    }
+
+    function showStatus(message, type) {
+        const statusElement = document.getElementById('statusMessage');
+        statusElement.textContent = message;
+        statusElement.className = `alert alert-${type} status-message`;
+        statusElement.style.display = 'block';
+        setTimeout(() => statusElement.style.display = 'none', 5000);
+    }
+</script>
+</body>
+</html>

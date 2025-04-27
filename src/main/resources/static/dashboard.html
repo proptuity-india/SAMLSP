@@ -37,6 +37,19 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        .cursor-not-allowed {
+            cursor: not-allowed;
+        }
+        .opacity-50 {
+            opacity: 0.5;
+        }
+        #user-photo-container {
+            transition: all 0.3s ease;
+        }
+
+        #user-photo {
+            transition: opacity 0.3s ease;
+        }
     </style>
 </head>
 <body class="bg-darkBg font-sans text-lightText min-h-screen">
@@ -51,8 +64,20 @@
         <span class="ml-2 text-xl font-semibold">ACME</span>
     </div>
     <div class="flex items-center space-x-6">
-        <div class="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white font-medium" id="user-avatar">JD</div>
-<!--        <span class="text-sm font-medium" id="username-display">Loading...</span>-->
+        <!-- Logout Button -->
+        <button id="local-logout-btn"
+                class="flex items-center text-mutedText hover:text-lightText transition-colors hover:bg-gray-700 px-3 py-1 rounded-md">
+            <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+            </svg>
+            Logout
+        </button>
+
+        <!-- Photo or Avatar -->
+        <div id="user-photo-container" class="h-8 w-8 rounded-full overflow-hidden flex items-center justify-center bg-primary">
+            <img id="user-photo" class="hidden h-full w-full object-cover" alt="User photo">
+            <span id="user-avatar" class="text-white font-medium">JD</span>
+        </div>
     </div>
 </nav>
 
@@ -100,18 +125,29 @@
                     <p class="text-sm text-mutedText">Department</p>
                     <p class="font-medium" id="role">Loading...</p>
                 </div>
+                <div class="md:col-span-3">
+                    <p class="text-sm text-mutedText">Groups</p>
+                    <div id="groups-container" class="flex flex-wrap gap-2 mt-2">
+                        <!-- Groups will be added here dynamically -->
+                        <span class="text-xs text-mutedText">Loading groups...</span>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- Tabs -->
+        <!-- In the Tabs section, modify the nav element -->
         <div class="border-b border-gray-700 mb-6">
-            <nav class="-mb-px flex space-x-8">
+            <nav class="-mb-px flex space-x-8" id="dashboard-tabs">
+                <!-- Sales Tab - will be shown/hidden based on role -->
                 <button id="sales-tab" onclick="showDashboard('sales')"
-                        class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-mutedText hover:text-lightText">
+                        class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-mutedText hover:text-lightText sales-tab">
                     Sales Dashboard
                 </button>
+
+                <!-- Marketing Tab - will be shown/hidden based on role -->
                 <button id="marketing-tab" onclick="showDashboard('marketing')"
-                        class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-mutedText hover:text-lightText">
+                        class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-mutedText hover:text-lightText marketing-tab">
                     Marketing Dashboard
                 </button>
             </nav>
@@ -498,7 +534,7 @@
         }
     }
 
-    // Role-based dashboard access
+    // Modify the fetchUserProfile function to handle role-based UI
     async function fetchUserProfile() {
         try {
             const response = await fetch('/api/user/profile');
@@ -509,39 +545,90 @@
             document.getElementById('lastname').innerText = data.lastname;
             document.getElementById('email').innerText = data.email;
             document.getElementById('role').innerText = data.role;
-            document.getElementById('userId').innerText = data.userId || 'U001';
-            document.getElementById('title').innerText = data.title || 'Sales Manager';
-            document.getElementById('username-display').innerText = data.firstname;
-            document.getElementById('user-avatar').innerText = data.firstname.charAt(0) + (data.lastname?.charAt(0) || '');
+            document.getElementById('userId').innerText = data.uid || 'U001';
+            document.getElementById('title').innerText = data.title || 'Employee';
 
-            // Enable/Disable tabs based on role
-            const marketingTab = document.getElementById('marketing-tab');
-            const salesTab = document.getElementById('sales-tab');
+            // Handle groups display
+            const groupsContainer = document.getElementById('groups-container');
+            groupsContainer.innerHTML = ''; // Clear loading message
 
-            if (data.role.toLowerCase() === "marketing") {
-                salesTab.classList.add('opacity-50', 'cursor-not-allowed');
-                salesTab.disabled = true;
-                showDashboard('marketing');
-            } else if (data.role.toLowerCase() === "sales") {
-                marketingTab.classList.add('opacity-50', 'cursor-not-allowed');
-                marketingTab.disabled = true;
-                showDashboard('sales');
+            if (data.groups && data.groups.length > 0) {
+                data.groups.forEach(group => {
+                    const groupElement = document.createElement('span');
+                    groupElement.className = 'px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary';
+                    groupElement.textContent = group;
+                    groupsContainer.appendChild(groupElement);
+                });
             } else {
-                // Default to marketing if no restrictions
+                groupsContainer.innerHTML = '<span class="text-xs text-mutedText">No groups assigned</span>';
+            }
+
+            // Set avatar initials as fallback
+            const avatarElement = document.getElementById('user-avatar');
+            avatarElement.innerText = data.firstname.charAt(0) + (data.lastname?.charAt(0) || '');
+
+            // Handle user photo if available
+            const photoContainer = document.getElementById('user-photo-container');
+            const photoElement = document.getElementById('user-photo');
+
+            if (data.photo && data.photo.trim() !== '') {
+                // Show photo and hide avatar
+                photoElement.src = `${data.photo}`;
+                photoElement.classList.remove('hidden');
+                avatarElement.classList.add('hidden');
+
+                // Adjust styling for photo
+                photoContainer.classList.remove('bg-primary');
+            } else {
+                // Show avatar and hide photo
+                photoElement.classList.add('hidden');
+                avatarElement.classList.remove('hidden');
+
+                // Ensure avatar has background color
+                photoContainer.classList.add('bg-primary');
+            }
+
+            // Get role and convert to lowercase for case-insensitive comparison
+            const userRole = data.role.toLowerCase();
+            const salesTab = document.getElementById('sales-tab');
+            const marketingTab = document.getElementById('marketing-tab');
+
+            // Reset both tabs to enabled state first
+            salesTab.classList.remove('opacity-50', 'cursor-not-allowed');
+            salesTab.disabled = false;
+            marketingTab.classList.remove('opacity-50', 'cursor-not-allowed');
+            marketingTab.disabled = false;
+
+            // Show appropriate dashboard based on role
+            if (userRole.includes('sales')) {
+                showDashboard('sales');
+            } else if (userRole.includes('marketing')) {
                 showDashboard('marketing');
+            } else {
+                // Default case (admin/other roles) - both enabled, show sales first
+                showDashboard('sales');
             }
 
             // Initialize charts after data is loaded
             initCharts();
         } catch (error) {
             console.error('Error fetching user profile:', error);
-            // Fallback to default view if API fails
-            showDashboard('marketing');
+            // Fallback - both tabs enabled if API fails
+            showDashboard('sales');
             initCharts();
         }
     }
 
     function showDashboard(section) {
+        // Get current role (you might need to store this from the profile fetch)
+        const userRole = document.getElementById('role').innerText.toLowerCase();
+
+        // Check if user has access to this dashboard
+        if ((section === 'sales' && !userRole.includes('sales')) ||
+            (section === 'marketing' && !userRole.includes('marketing'))) {
+            return; // Don't show the dashboard
+        }
+
         // Hide all dashboards
         document.querySelectorAll('.dashboard-content').forEach(div => {
             div.classList.add('hidden');
@@ -561,8 +648,34 @@
             document.getElementById(`${section}-tab`).classList.add('border-primary', 'text-lightText');
         }
     }
-
     window.onload = fetchUserProfile;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        fetchUserProfile(); // Load user data
+
+        // Proper logout button implementation
+        const logoutBtn = document.getElementById('local-logout-btn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('Logout initiated'); // Debug log
+
+                // Clear client-side storage if needed
+                localStorage.clear();
+                sessionStorage.clear();
+
+                // Redirect to logout endpoint
+                window.location.href = '/local-logout';
+
+                // Fallback redirect in case of issues
+                setTimeout(() => {
+                    window.location.href = '/login';
+                }, 1000);
+            });
+        } else {
+            console.error('Logout button not found!');
+        }
+    });
 </script>
 </body>
 </html>

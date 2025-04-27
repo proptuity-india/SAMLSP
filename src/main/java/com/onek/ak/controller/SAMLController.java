@@ -43,16 +43,10 @@ import net.shibboleth.utilities.java.support.xml.SerializeSupport;
 @RequestMapping("/saml")
 public class SAMLController {
 
-//    @Value("${saml.sp.entity-id}")
-//    private String spEntityId;
-//
-//    @Value("${saml.sp.acs-url}")
-//    private String assertionConsumerServiceURL;
-//
-//    @Value("${saml.idp.sso-url}")
-//    private String idpSSOUrl;
-//    @Value("${saml.auth-contextVal}")
-//    private String authCtx;
+    @Value("${saml.sp.entity-id}") private String spEntityId;
+    @Value("${saml.sp.acs-url}") private String assertionConsumerServiceURL;
+    @Value("${saml.idp.sso-url}") private String idpSSOUrl;
+    @Value("${saml.auth-contextVal}") private String authCtx;
 
     private final SamlConfigurationService configService;
 
@@ -60,13 +54,11 @@ public class SAMLController {
     public SAMLController(SamlConfigurationService configService) {
         this.configService = configService;
     }
+
     @GetMapping("/login")
     public ResponseEntity<Void> samlLogin() {
-        SamlConfiguration config = configService.getConfiguration();
-        if (config == null) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .header("X-Error", "SAML configuration not found").build();
-        }
+
+        var config = configService.getConfiguration();
 
         try {
             // Create AuthnRequest using values from MongoDB
@@ -75,9 +67,11 @@ public class SAMLController {
             authnRequest.setIssueInstant(Instant.now());
             authnRequest.setDestination(config.getIdpSSOUrl());
             authnRequest.setProtocolBinding("urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST");
+            authnRequest.setForceAuthn(true);
 
             // Set Issuer
             Issuer issuer = new IssuerBuilder().buildObject();
+//            issuer.setValue(config.getSpEntityId());
             issuer.setValue(config.getSpEntityId());
             authnRequest.setIssuer(issuer);
 
@@ -91,7 +85,7 @@ public class SAMLController {
             requestedAuthnContext.setComparison(AuthnContextComparisonTypeEnumeration.EXACT);
 
             AuthnContextClassRef authnContextClassRef = new AuthnContextClassRefBuilder().buildObject();
-            authnContextClassRef.setURI(config.getAuthContextValue());
+            authnContextClassRef.setURI(authCtx);
             requestedAuthnContext.getAuthnContextClassRefs().add(authnContextClassRef);
             authnRequest.setRequestedAuthnContext(requestedAuthnContext);
 

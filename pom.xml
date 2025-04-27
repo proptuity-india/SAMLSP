@@ -27,7 +27,7 @@
 		<url/>
 	</scm>
 	<properties>
-		<java.version>23</java.version>
+		<java.version>17</java.version>
 	</properties>
 	
 
@@ -84,16 +84,8 @@
 
 	<!-- Embedded MongoDB for testing -->
 	<dependency>
-		<groupId>de.flapdoodle.embed</groupId>
-		<artifactId>de.flapdoodle.embed.mongo</artifactId>
-		<version>4.20.0</version>
-		<scope>test</scope>
-	</dependency>
-
-	<!-- Spring Data MongoDB -->
-	<dependency>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-data-mongodb</artifactId>
+		<groupId>junit</groupId>
+		<artifactId>junit</artifactId>
 	</dependency>
 
 </dependencies>
